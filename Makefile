@@ -2,6 +2,6 @@ VARIABLE_SECRETS_DIR ?= '~/mocha/secrets'
 
 
 test:
-	pytest tests
+	./epvenv39/Scripts/python -m pytest tests
 
 
