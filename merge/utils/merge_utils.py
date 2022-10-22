@@ -49,23 +49,6 @@ def removePara(para):
     p._p = p._element = None
 
 
-def get_engine(config):
-    engine = Engine(
-
-        dirs=[
-            os.path.join(local_root, 'templates/').replace('\\', '/'), 
-            os.path.join(settings.BASE_DIR, local_root,config.tenant+'/templates/').replace('\\', '/'),],
-
-        libraries={
-                # 'relative_path': 'merge.relative_path',
-                'mathfilters': 'merge.templatetags.mathfilters',
-        },
-
-        # add options for relative path names
-        )
-    return engine
-
-
 def substituteVariablesPlain(config, fileNameIn, fileNameOut, subs):
     c = Context(subs)
     fileIn = open(fileNameIn, "r", encoding = "utf-8")
