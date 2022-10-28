@@ -1,0 +1,4 @@
+Plain Text File Document
+========================
+
+(for {{ company.name }})
