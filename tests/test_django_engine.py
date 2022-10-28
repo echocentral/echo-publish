@@ -46,7 +46,11 @@ class TestDjangoEngine(TestCase):
         ('./tests/fixtures/SampleText01.txt', 'b',
             {'adj1': 'trivial', 'adj2': 'useful', "company": {"name": "XYZ Inc."}}), 
         ('./tests/fixtures/SampleText02.txt', 'a',
-            {"versions": ["1a", "1b"], "company": {"name": "XYZ Inc."}}) 
+            {"versions": ["1a", "1b"], "company": {"name": "XYZ Inc."}}),
+        ('./tests/fixtures/SampleText03.txt', 'a',
+            {"versions": ["1a", "1b"], "company": {"name": "XYZ Inc."}}),
+        ('./tests/fixtures/SampleText03.txt', 'b',
+            {"versions": ["1a", "1b", "1c", "1d"], "company": {"name": "XYZ Inc."}}) 
     ])    
     def test_render_file(self, fixture, variant, subs):
         config = ClientConfig()
