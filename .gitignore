@@ -1,2 +1,3 @@
 epvenv39/
 *.pyc
+tests/results/

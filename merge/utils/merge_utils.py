@@ -8,12 +8,13 @@ import zipfile
 import tempfile
 import shutil
 import xmltodict
+from merge.utils.engine_utils import substituteVariablesPlainString
+import django.template.exceptions
 """
 from django.conf import settings
 from docx import Document
 #  from docx.text.paragraph import Paragraph
 from django.template import Context, Engine
-import django.template.exceptions
 from markdown import markdown
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -48,28 +49,7 @@ def removePara(para):
     p.getparent().remove(p)
     p._p = p._element = None
 
-
-def substituteVariablesPlain(config, fileNameIn, fileNameOut, subs):
-    c = Context(subs)
-    fileIn = open(fileNameIn, "r", encoding = "utf-8")
-    fullText = fileIn.read()
-    t = get_engine(config).from_string(fullText)
-    xtxt = t.render(c)
-    xtxt = apply_sequence(xtxt)
-    fileOut = open(fileNameOut, "w", encoding="utf-8")
-    fileOut.write(xtxt)
-    return {"file": fileNameOut}
-
-    
-def substituteVariablesPlainString(config, stringIn, subs):
-    c = Context(subs)
-    fullText = stringIn
-    t = get_engine(config).from_string(fullText)
-    xtxt = t.render(c)
-    xtxt = apply_sequence(xtxt)
-    return xtxt
-
-    
+"""    
 def preprocess(text):
     text = text.replace("‘","'",).replace("’","'",)
     text = text.replace("{% #A", "{% cycle 'A' 'B' 'C' 'D' 'E' 'F' 'G' 'H' 'I' 'J' 'K' 'L' 'M' 'N' 'O' 'P' 'Q' 'R' 'S' 'T' 'U' 'V' 'W' 'X' 'Y' 'Z'")    
@@ -80,20 +60,7 @@ def preprocess(text):
     text = clean_tags_in_word(text, ('{{', '}}'))
     text = clean_tags_in_word(text, ('{%', '%}'))
     return text
-
-
-def apply_sequence(text):
-    alf = string.ascii_uppercase
-    target = '[% #A %]'
-    sub = text.find(target)
-    n = 0
-    while sub >= 1:
-        text = text[:sub]+alf[n]+text[sub+len(target):]
-        n += 1
-        sub = text.find(target)
-    return text
-
-
+"""
 def docx_copy_run_style_from(run1, run2):
     run1.font.color.rgb = run2.font.color.rgb
     run1.font.all_caps = run2.font.all_caps
@@ -395,7 +362,7 @@ def merge_docx_header_footer(config, full_local_filename, subs, xmlname):
             docx.write(os.path.join(tmp_dir,filename), filename)
     shutil.rmtree(tmp_dir)
     return({"file": docx_filename})
-
+"""
 
 def docx_relationship_dict(zip, filename):
     xml_content = zip.read(filename)
@@ -403,7 +370,6 @@ def docx_relationship_dict(zip, filename):
     xml_content = preprocess(xml_content)
     xml_content = xml_content.replace("&quot;", '"')
     return [dict(d) for d in xmltodict.parse(xml_content)['Relationships']['Relationship']]
-
 
 def docx_subfile(config, zip, tmp_dir, subs, filename):
     try:
@@ -489,6 +455,7 @@ def substituteVariablesDocx_direct(config, file_name_in, file_name_out, subs):
     zip = zipfile.ZipFile(f)
     filenames = zip.namelist()
     tmp_dir = tempfile.mkdtemp()
+    print("TEMP", tmp_dir)
     zip.extractall(tmp_dir)
 
     relationships = {}
@@ -536,7 +503,7 @@ def substituteVariablesDocx_direct(config, file_name_in, file_name_out, subs):
     shutil.rmtree(tmp_dir)
 
     return({"file": file_name_out})
-
+"""
 
 def get_docx_paras(zip):
     xml_content = zip.read("word/document.xml").decode("utf8")
@@ -760,7 +727,7 @@ def password_pdf(target, password):
 
     return {"filename": optarget}
 
-
+"""
 def clean_tag(tag):
     intrusive_tag_start = tag.find("<")
     intrusive_tag_end = tag.find(">")
@@ -783,4 +750,3 @@ def clean_tags_in_word(text, tag_def):
         remaining = remaining[tagspan[1]:]
     done.append(remaining)
     return ''.join(done)
-"""
