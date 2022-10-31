@@ -3,7 +3,7 @@ import datetime
 from parameterized import parameterized
 from unittest import TestCase
 import filecmp
-from merge.utils.merge_utils import substituteVariablesDocx_direct
+from merge.utils.docx_utils import substituteVariablesDocx_direct, docx_content
 from merge.models import ClientConfig
 from django.core.wsgi import get_wsgi_application
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "merge.engine_settings")
@@ -50,4 +50,6 @@ class TestMergeUtils(TestCase):
             pass
         fileOut = substituteVariablesDocx_direct(config, filenameIn, filenameOut, subs)
         self.assertEqual(fileOut['file'], filenameOut)
-        self.assertTrue(filecmp.cmp(filenameOut, filenameExpected))
+        expected = docx_content(filenameExpected)
+        merged = docx_content(fileOut['file'])
+        self.assertEqual(expected, merged)

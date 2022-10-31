@@ -28,28 +28,6 @@ from .resource_utils import (strip_xml_dec, get_xml_dec)
 from .config import local_root
 """
 
-class TemplateError(Exception):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
-
-
-def replaceParams(txt, subs):
-    for key in subs.keys():
-        old = "${"+key+"}"
-        if (txt.find(old) >= 0):
-            txt = txt.replace(old, subs[key])
-    return txt
-
-"""
-def removePara(para):
-    p = para._element
-    p.getparent().remove(p)
-    p._p = p._element = None
-
-"""    
 """
 def docx_copy_run_style_from(run1, run2):
     run1.font.color.rgb = run2.font.color.rgb
@@ -353,7 +331,7 @@ def merge_docx_header_footer(config, full_local_filename, subs, xmlname):
     shutil.rmtree(tmp_dir)
     return({"file": docx_filename})
 """
-"""
+
 def docx_relationship_dict(zip, filename):
     xml_content = zip.read(filename)
     xml_content = xml_content.decode("UTF-8")
@@ -384,7 +362,7 @@ def docx_xml_part(zip, part_filename):
     xml_content = preprocess(xml_content)
     xml_content = xml_content.replace("&quot;", '"')
     return xml_content
-"""
+
 
 def build_keys_list(doc, prefix=None):
     img_files = []
@@ -405,7 +383,7 @@ def build_keys_list(doc, prefix=None):
                 img_files.append((ext_key, doc[key.replace(".","_")+"_file"]))
     return img_files
 
-"""
+
 def docx_subfile_subst_images(config, zip, subs, tmp_dir, filename, part):
     image_copies = []
     try:
@@ -517,7 +495,7 @@ def substituteVariablesDocx_direct(config, file_name_in, file_name_out, subs):
 
     return({"file": file_name_out})
 """
-"""
+
 def get_docx_paras(zip):
     xml_content = zip.read("word/document.xml").decode("utf8")
     paras_start = xml_content.find("<w:p")
@@ -741,7 +719,6 @@ def password_pdf(target, password):
     return {"filename": optarget}
 
 """
-"""
 def clean_tag(tag):
     intrusive_tag_start = tag.find("<")
     intrusive_tag_end = tag.find(">")
@@ -764,4 +741,15 @@ def clean_tags_in_word(text, tag_def):
         remaining = remaining[tagspan[1]:]
     done.append(remaining)
     return ''.join(done)
-"""
+
+
+def preprocess(text):
+    text = text.replace("‘","'",).replace("’","'",)
+    text = text.replace("{% #A", "{% cycle 'A' 'B' 'C' 'D' 'E' 'F' 'G' 'H' 'I' 'J' 'K' 'L' 'M' 'N' 'O' 'P' 'Q' 'R' 'S' 'T' 'U' 'V' 'W' 'X' 'Y' 'Z'")    
+    text = text.replace("{% #a", "{% cycle 'a' 'b' 'c' 'd' 'e' 'f' 'g' 'h' 'i' 'j' 'k' 'l' 'm' 'n' 'o' 'p' 'q' 'r' 's' 't' 'u' 'v' 'w' 'x' 'y' 'z'")    
+    text = text.replace("{% #9", "{% cycle '1' '2' '3' '4' '5' '6' '7' '8' '9' '10' '11' '12' '13' '14' '15' '16' '17' '18' '19' '20' '21' '22' '23' '24' '25' '26' '27' '28' '29' '30' '31' '32' '33' '34' '35' '36' '37' '38' '39' '40' '41' '42' '43' '44' '45' '46' '47' '48' '49' '50' '51' '52' '53' '54' '55' '56' '57' '58' '59' '60' '61' '62' '63' '64' '65' '66' '67' '68' '69' '70' '71' '72' '73' '74' '75' '76' '77' '78' '79' '80' '81' '82' '83' '84' '85' '86' '87' '88' '89' '40' '91' '92' '93' '94' '95' '96' '97' '98' '99' '100' ")    
+    text = text.replace("{% #I", "{% cycle 'I' 'II' 'III' 'IV' 'V' 'VI' 'VII' 'VIII' 'IX' 'X' 'XI' 'XII' 'XIII' 'XIV' 'XV' 'XVI' 'XVII' 'XVIII' 'XIX' 'XX'")    
+    text = text.replace("{% #i", "{% cycle 'i' 'ii' 'iii' 'iv' 'v' 'vi' 'vii' 'viii' 'ix' 'x' 'xi' 'xii' 'xiii' 'xiv' 'xv' 'xvi' 'xvii' 'xviii' 'xix' 'xx'")    
+    text = clean_tags_in_word(text, ('{{', '}}'))
+    text = clean_tags_in_word(text, ('{%', '%}'))
+    return text
