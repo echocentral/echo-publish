@@ -10,9 +10,9 @@ import shutil
 import xmltodict
 from merge.utils.engine_utils import substituteVariablesPlainString
 import django.template.exceptions
+from docx import Document
 """
 from django.conf import settings
-from docx import Document
 #  from docx.text.paragraph import Paragraph
 from django.template import Context, Engine
 from markdown import markdown
@@ -58,7 +58,7 @@ def docx_copy_para_format_from(para1, para2):
     para1.paragraph_format.space_before = para2.paragraph_format.space_before
     para1.paragraph_format.widow_control = para2.paragraph_format.widow_control
 
-
+"""
 def isControlText(s):
     s = s.strip()
     if s[:2] == "{%" and s[-2:] == "%}" and s.find("%}") == s.rfind("%}"):
@@ -71,6 +71,12 @@ def isControlText(s):
     else:
         return False
 
+def removePara(para):
+    p = para._element
+    p.getparent().remove(p)
+    p._p = p._element = None
+        
+"""
 
 def isControlLine(s):
     s = s.split("+")[0]
@@ -122,7 +128,7 @@ def extract_regex_matches_docx(file_name_in, regex, wrap=None, root_tag="list", 
     else:
         return m
 
-
+"""
 def preprocess_docx_template(file_name_in, file_name_out):
     timestamp_template = os.stat(file_name_in).st_mtime
     prep_file_exists = False
@@ -139,8 +145,8 @@ def preprocess_docx_template(file_name_in, file_name_out):
                 if isControlText(txt):
                     run.text = "[##]"+txt
         doc_in.save(file_name_out)
-
-
+"""
+"""
 def process_newlines(para):
     runs = para.runs
     for run in runs:
@@ -152,8 +158,8 @@ def process_newlines(para):
                 run.add_break()
                 txt = txt[txt.find("\\n")+2:]
             run.add_text(txt)
-
-
+"""
+"""
 def postprocess_docx(file_name_in):
     doc_in = Document(docx=file_name_in)
     for p in doc_in.paragraphs:
@@ -169,7 +175,7 @@ def postprocess_docx(file_name_in):
                     process_newlines(p)
 
     doc_in.save(file_name_in)
-
+"""
 
 def substituteVariablesDocx(config, file_name_in, fileNameOut, subs):
     c = Context(subs)

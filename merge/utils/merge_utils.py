@@ -44,10 +44,6 @@ def replaceParams(txt, subs):
     return txt
 
 """
-def removePara(para):
-    p = para._element
-    p.getparent().remove(p)
-    p._p = p._element = None
 
 """    
 """
