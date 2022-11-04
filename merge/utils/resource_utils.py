@@ -11,6 +11,9 @@ def get_working_dir():
 
 def get_local_dir(local, config):
     cwd = get_working_dir()
-    local_d = os.path.join(cwd, local_root, config.tenant, local)
+    if config.tenant == '.':
+        local_d = os.path.join(cwd, local_root, local)
+    else:
+        local_d = os.path.join(cwd, local_root, config.tenant, local)
 #        local_d = "C:\\Users\\Andrew\\Documents\\GitHub\\"+install_name+"\\"+local_root+"\\"+local
     return local_d

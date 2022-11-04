@@ -363,7 +363,6 @@ def docx_subfile(config, zip, tmp_dir, subs, filename):
 
 def docx_xml_part(zip, part_filename):
     xml_content = zip.read(part_filename)
-    print(part_filename)
     xml_content = xml_content.decode("UTF-8")
     xml_content = preprocess(xml_content)
     xml_content = xml_content.replace("&quot;", '"')
