@@ -7,6 +7,9 @@
 import os
 import json
 import time
+from traceback import format_exc
+from merge.steps.step import Step
+from merge.utils.resource_utils import get_local_dir
 
 
 class StepContext(object):
@@ -21,7 +24,29 @@ class StepContext(object):
         self.uniq = uniq
         self.output_folder = output_folder
         self.output_subfolder = output_subfolder
-        print(self.template_name)
+
+    def localNames(step_context):
+        template_local_folder = get_local_dir(step_context.template_folder, step_context.config)+"/"
+        if step_context.template_subfolder:
+            template_local_folder += step_context.template_subfolder+"/"
+            if not os.path.exists(template_local_folder):
+                os.makedirs(template_local_folder)
+        localTemplateFileName = (template_local_folder+step_context.template_name.split(".")[0]).replace("//", "/")
+        localMergedFileNameOnly = (step_context.template_name.split(".")[0]+'_'+step_context.uniq)
+        if step_context.template_subfolder:
+            localMergedFileNameOnly = step_context.template_subfolder[1:]+"/"+localMergedFileNameOnly
+        localMergedFileNameOnly = localMergedFileNameOnly.replace("//","/").replace(" ","_").replace("/","-")
+        local_output_folder = step_context.output_folder
+        if step_context.output_subfolder:
+            local_output_folder += step_context.output_subfolder+"/"
+            if not os.path.exists(local_output_folder):
+                os.makedirs(local_output_folder)
+        local_split = get_local_dir(local_output_folder, step_context.config).split('\\')
+        localMergedFileName = '/'.join(local_split+[localMergedFileNameOnly])
+    #    localMergedFileName = (cwd+"/"+local_root+"/"+local_output_folder+"/"+localMergedFileNameOnly).replace("//", "/") #for now, avoid creating output folders
+        return localTemplateFileName, localMergedFileName, localMergedFileNameOnly
+
+
 
 
 class Flow(object):
@@ -31,108 +56,50 @@ class Flow(object):
     overall_outcome["success"]=True
     overall_outcome["messages"]=[]
 
-    def __init__(self, flow_spec, context):
+    def __init__(self, flow_spec, step_context):
         self.flow_spec = flow_spec
-        self.context = context
+        self.context = step_context
 
     def process(self, subs, payload=None, require_template=True, password=None):
-        localTemplateFileName, localMergedFileName, localMergedFileNameOnly = localNames(cwd, config, uniq, template_subfolder, template_name, output_subfolder)
+        step_dict = Step.step_dict()
+
+        localTemplateFileName, localMergedFileName, localMergedFileNameOnly = \
+            self.context.localNames()
         step_time = time.time()
-        for step in flow:
+        for step in self.flow_spec:
             try:
                 try:
                     local_folder = step["folder"]
                 except:
-                    local_folder = output_folder
+                    local_folder = self.context.output_folder
 
-                if step["step"]=="download":
-                    if doc_id ==None and require_template:
-                        if template_subfolder:
-                            local_folder = local_folder+template_subfolder
-                        #else:
-                        #    local_folder = template_remote_folder
-                        download_folder = gd_path_equivalent(config, local_folder.replace("\\","/"))
-                        doc = folder_file(config, download_folder, template_name)
-                        doc_id = doc["id"]
-                        doc_mimetype = doc["mimeType"]
-                    outcome = process_download(config, step, doc_id, doc_mimetype, localTemplateFileName, localMergedFileName, localMergedFileNameOnly, output_subfolder, subs, password=password)
-
-                if step["step"]=="merge":
-                    outcome = process_merge(cwd, config, uniq, step, localTemplateFileName, template_subfolder, localMergedFileName, localMergedFileNameOnly, output_subfolder, subs)
-
-                if step["step"]=="compound_merge": #template_name is a list of template names in a json file
-                    outcome = process_compound_merge(cwd, config, uniq, step, template_subfolder, template_name, output_subfolder, subs)
-
-                if step["step"]=="merge2":
-                    outcome = process_merge(cwd, config, uniq, step, localTemplateFileName, template_subfolder, localMergedFileName, localMergedFileNameOnly, output_subfolder, subs)
-
-                if step["step"]=="compound_merge2": #template_name is a list of template names in a json file
-                    outcome = process_compound_merge(cwd, config, uniq, step, template_subfolder, template_name, output_subfolder, subs)
-
-                if step["step"]=="merge0":
-                    outcome = process_merge0(cwd, config, uniq, step, localTemplateFileName, template_subfolder, localMergedFileName, localMergedFileNameOnly, output_subfolder, subs)
-
-                if step["step"]=="compound_merge0": #template_name is a list of template names in a json file
-                    outcome = process_compound_merge0(cwd, config, uniq, step, template_subfolder, template_name, output_subfolder, subs)
-
-                if step["step"]=="markdown":
-                    outcome = process_markdown(cwd, config, step, localMergedFileName, localMergedFileNameOnly, subs)
-
-                if step["step"]=="pdf":
-                    outcome = process_pdf(config, step, localMergedFileName, localMergedFileNameOnly, subs, password=password)
-
-                if step["step"]=="watermark_pdf":
-                    outcome = wmark_pdf(config, step, localMergedFileName, localMergedFileNameOnly, template_subfolder, subs)
-
-                if step["step"]=="upload":
-                    if local_folder=="templates":
-                        localFileName = localTemplateFileName
-                        upload_id = folder(config, template_remote_folder)["id"]
-                        upload_subfolder = template_subfolder
-                    else:
-                        localFileName = localMergedFileName
-                        if output_folder==None:
-                            output_folder = "output"
-                        output_folder = gd_path_equivalent(config, output_folder)
-                        upload_id = folder(config, output_folder)["id"]
-                        upload_subfolder = None
-                    outcome = process_upload(config, step, localFileName, upload_subfolder, upload_id)
-                    doc_id = outcome["id"]
-                    doc_mimetype = outcome["mimeType"]
-
-                if step["step"]=="email":
-                    outcome = process_email(config, step, localMergedFileName, you, email_credentials, subs)
-
-                if step["step"]=="push":
-                    outcome = process_push(cwd, config, step, localTemplateFileName, "templates/"+template_subfolder+"/", subs, payload=payload)
-
-                if step["step"]=="payload":
-                    outcome = process_payload_dump(cwd, config, step, localMergedFileName, subs, payload=payload)
-
-                if step["step"]=="extract":
-                    outcome = process_extract(config, step, localMergedFileName, subs)
+                if step["step"] == "merge":
+                    step_class = step_dict[step["step"]]
+                    step_instance = step_class(step)
+                    outcome = step_instance.process(self.context, subs)
 
                 step_end_time = time.time()
-                outcomes.append({"step":step["name"], "success": True, "outcome":outcome, "time": step_end_time-step_time})
+                self.outcomes.append({"step":step["name"], "success": True, "outcome":outcome, "time": step_end_time-step_time})
                 step_time = step_end_time
                 for key in outcome.keys():
                     if key in ["link", "id", "mimeType", "plainlink"]:
-                        overall_outcome[key]=outcome[key]
-                        overall_outcome[key+"_"+step["name"].replace(" ","_")]=outcome[key]
+                        self.overall_outcome[key] = outcome[key]
+                        self.overall_outcome[key+"_"+step["name"].replace(" ","_")]=outcome[key]
             except Exception as ex:
                 step_end_time = time.time()
-                outcomes.append({"step":step["name"], "success": False, "outcome": {"exception":str(ex)}, "time": step_end_time-step_time})
+                self.outcomes.append({"step": step["name"], "success": False, "outcome": {"exception":str(ex)}, "time": step_end_time-step_time})
                 step_time = step_end_time
-                overall_outcome["success"]=False
-                overall_outcome["messages"].append("Exception in step: "+step["name"]+".  "+str(ex))
-                overall_outcome["traceback"]=format_exc(8)
+                self.overall_outcome["success"] = False
+                self.overall_outcome["messages"].append("Exception in step: "+step["name"]+".  "+str(ex))
+                self.overall_outcome["traceback"] = format_exc(8)
                 if not("critical" in step.keys() and step["critical"]=="false"):
                     break
     #                raise ex
             
     #    overall_outcome["success"]=True
-        overall_outcome["steps"]=outcomes
+        self.overall_outcome["steps"] = self.outcomes
 
+        """
         input = {
             "cwd":cwd,
             "flow":flow,
@@ -155,7 +122,7 @@ class Flow(object):
         else:
             state="fail"
         push_local_txt(cwd, config, "requests", localMergedFileNameOnly+"."+state+".json", request_record_str)
-
-        return overall_outcome
+        """
+        return self.overall_outcome
 
 
