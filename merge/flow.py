@@ -14,6 +14,7 @@ from merge.utils.resource_utils import get_local_dir
 
 class StepContext(object):
 
+    """
     def __init__(self, cwd, config, template_remote_folder, template_folder, template_subfolder, template_name, uniq, output_folder, output_subfolder):
         self.cwd = cwd
         self.config = config
@@ -24,29 +25,36 @@ class StepContext(object):
         self.uniq = uniq
         self.output_folder = output_folder
         self.output_subfolder = output_subfolder
+    """
+    def __init__(self, config, remote_resource_manager, resource_manager, template_subfolder, template_name, output_subfolder, uniq):
+        self.config = config
+        self.remote_resource_manager = remote_resource_manager
+        self.local_resources = resource_manager
+        self.template_subfolder = template_subfolder
+        self.template_name = template_name
+        self.output_subfolder = output_subfolder
+        self.uniq = uniq
 
-    def localNames(step_context):
-        template_local_folder = get_local_dir(step_context.template_folder, step_context.config)+"/"
-        if step_context.template_subfolder:
-            template_local_folder += step_context.template_subfolder+"/"
+    def localNames(self):
+        template_local_folder = self.local_resources.get_local_dir('templates', self.config)
+        if self.template_subfolder:
+            template_local_folder += self.template_subfolder+"/"
             if not os.path.exists(template_local_folder):
                 os.makedirs(template_local_folder)
-        localTemplateFileName = (template_local_folder+step_context.template_name.split(".")[0]).replace("//", "/")
-        localMergedFileNameOnly = (step_context.template_name.split(".")[0]+'_'+step_context.uniq)
-        if step_context.template_subfolder:
-            localMergedFileNameOnly = step_context.template_subfolder[1:]+"/"+localMergedFileNameOnly
+
+        localTemplateFileName = (template_local_folder+self.template_name.split(".")[0]).replace("//", "/")
+        localMergedFileNameOnly = (self.template_name.split(".")[0]+'_'+self.uniq)
+        if self.template_subfolder:
+            localMergedFileNameOnly = self.template_subfolder[1:]+"/"+localMergedFileNameOnly
         localMergedFileNameOnly = localMergedFileNameOnly.replace("//","/").replace(" ","_").replace("/","-")
-        local_output_folder = step_context.output_folder
-        if step_context.output_subfolder:
-            local_output_folder += step_context.output_subfolder+"/"
+        local_output_folder = self.local_resources.get_local_dir('output', self.config)
+        if self.output_subfolder:
+            local_output_folder += self.output_subfolder+"/"
             if not os.path.exists(local_output_folder):
                 os.makedirs(local_output_folder)
-        local_split = get_local_dir(local_output_folder, step_context.config).split('\\')
+        local_split = get_local_dir(local_output_folder, self.config).split('\\')
         localMergedFileName = '/'.join(local_split+[localMergedFileNameOnly])
-    #    localMergedFileName = (cwd+"/"+local_root+"/"+local_output_folder+"/"+localMergedFileNameOnly).replace("//", "/") #for now, avoid creating output folders
         return localTemplateFileName, localMergedFileName, localMergedFileNameOnly
-
-
 
 
 class Flow(object):
@@ -56,9 +64,10 @@ class Flow(object):
     overall_outcome["success"]=True
     overall_outcome["messages"]=[]
 
-    def __init__(self, flow_spec, step_context):
+    def __init__(self, flow_spec, step_context, config):
         self.flow_spec = flow_spec
         self.context = step_context
+        self.config = config
 
     def process(self, subs, payload=None, require_template=True, password=None):
         step_dict = Step.step_dict()
@@ -71,21 +80,21 @@ class Flow(object):
                 try:
                     local_folder = step["folder"]
                 except:
-                    local_folder = self.context.output_folder
+                    local_folder = self.context.local_resources.get_local_dir('output', self.config)
 
-                if step["step"] == "merge":
-                    step_class = step_dict[step["step"]]
-                    step_instance = step_class(step)
-                    outcome = step_instance.process(self.context, subs)
+                step_class = step_dict[step["step"]]
+                step_instance = step_class(step)
+                outcome = step_instance.process(self.context, subs)
 
                 step_end_time = time.time()
-                self.outcomes.append({"step":step["name"], "success": True, "outcome":outcome, "time": step_end_time-step_time})
+                self.outcomes.append({"step": step["name"], "success": True, "outcome":outcome, "time": step_end_time-step_time})
                 step_time = step_end_time
                 for key in outcome.keys():
                     if key in ["link", "id", "mimeType", "plainlink"]:
                         self.overall_outcome[key] = outcome[key]
                         self.overall_outcome[key+"_"+step["name"].replace(" ","_")]=outcome[key]
             except Exception as ex:
+                print(ex)
                 step_end_time = time.time()
                 self.outcomes.append({"step": step["name"], "success": False, "outcome": {"exception":str(ex)}, "time": step_end_time-step_time})
                 step_time = step_end_time
@@ -96,12 +105,10 @@ class Flow(object):
                     break
     #                raise ex
             
-    #    overall_outcome["success"]=True
         self.overall_outcome["steps"] = self.outcomes
 
         """
         input = {
-            "cwd":cwd,
             "flow":flow,
             "template_remote_folder":template_remote_folder,
             "template_subfolder":template_subfolder,

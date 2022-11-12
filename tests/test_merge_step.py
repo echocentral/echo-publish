@@ -6,8 +6,10 @@ from merge.models import ClientConfig
 from merge.utils.docx_utils import docx_content
 from django.core.wsgi import get_wsgi_application
 from merge.flow import StepContext
+from merge.resources.resource_manager import LocalResourceManager
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "merge.engine_settings")
 application = get_wsgi_application()
+
 
 class TestMergeStep(TestCase):
     
@@ -15,17 +17,13 @@ class TestMergeStep(TestCase):
         spec = {
             "local_ext": ".docx"
         }
-        cwd = os.getcwd()
         config = ClientConfig()
         config.tenant = '.'
         uniq = 'abc123'
         localTemplateFileName = "Invoice.docx"
-        template_folder = "../tests/fixtures/"
         template_subfolder = None
-        localMergedFileName = "./tests/results/Invoice_abc123"
-        filenameExpected = "./tests/expected/Invoice.out.docx"
-        localMergedFileNameOnly = "Invoice.out"
-        output_folder = '../tests/results/'
+        localMergedFileName = "./tests/fixtures/output/Invoice_abc123"
+        filenameExpected = "./tests/fixtures/expected/Invoice.out.docx"
         output_subfolder = None
 
         subs = {
@@ -56,14 +54,16 @@ class TestMergeStep(TestCase):
             os.remove(localMergedFileName+'.docx')
         except OSError:
             pass
-        step_context = StepContext(cwd, config, None, template_folder, template_subfolder, localTemplateFileName, uniq, output_folder, output_subfolder)
+        remote_resources = None
+        local_resources = LocalResourceManager(local_root='tests\\fixtures')
+        step_context = StepContext(config, remote_resources, local_resources, template_subfolder, localTemplateFileName, output_subfolder, uniq)
         ms = MergeStep(spec)
         outcome = ms.process(step_context, subs)
         expected = docx_content(filenameExpected)
         merged = docx_content(localMergedFileName+'.docx')
         self.assertEqual(expected, merged)
         expected_outcome = {
-            'file': 'C:/Users/Andrew/Documents/GitHub/echo-publish/merge/../tests/results//Invoice_abc123.docx',
+            'file': 'C:/Users/Andrew/Documents/GitHub/echo-publish/tests/fixtures/output//Invoice_abc123.docx',
             'link': 'http://test.echo-publish.con/file/?name=Invoice_abc123.docx'
         }
         self.assertEqual(outcome, expected_outcome)

@@ -1,0 +1,5 @@
+[{
+    "name": "Merge docx",
+    "step": "merge",
+    "local_ext": ".docx"
+}]

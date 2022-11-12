@@ -41,23 +41,23 @@ class TestDjangoEngine(TestCase):
         self.assertEqual(stringOut, expected)
 
     @parameterized.expand([
-        ('./tests/fixtures/SampleText01.txt', 'a',
+        ('./tests/fixtures/templates/SampleText01.txt', 'a',
             {'adj1': 'trivial', 'adj2': 'useful', "company": {"name": "ABC Inc."}}), 
-        ('./tests/fixtures/SampleText01.txt', 'b',
+        ('./tests/fixtures/templates/SampleText01.txt', 'b',
             {'adj1': 'trivial', 'adj2': 'useful', "company": {"name": "XYZ Inc."}}), 
-        ('./tests/fixtures/SampleText02.txt', 'a',
+        ('./tests/fixtures/templates/SampleText02.txt', 'a',
             {"versions": ["1a", "1b"], "company": {"name": "XYZ Inc."}}),
-        ('./tests/fixtures/SampleText03.txt', 'a',
+        ('./tests/fixtures/templates/SampleText03.txt', 'a',
             {"versions": ["1a", "1b"], "company": {"name": "XYZ Inc."}}),
-        ('./tests/fixtures/SampleText03.txt', 'b',
+        ('./tests/fixtures/templates/SampleText03.txt', 'b',
             {"versions": ["1a", "1b", "1c", "1d"], "company": {"name": "XYZ Inc."}}) 
     ])    
     def test_render_file(self, fixture, variant, subs):
         config = ClientConfig()
         config.tenant = ('.')
         filenameIn = fixture
-        filenameOut = filenameIn.replace('fixtures', 'results').replace('.txt', f'.{variant}.txt')
-        filenameExpected = filenameOut.replace('results', 'expected')
+        filenameOut = filenameIn.replace('templates', 'output').replace('.txt', f'.{variant}.txt')
+        filenameExpected = filenameOut.replace('output', 'expected')
         fileOut = substituteVariablesPlain(config, filenameIn, filenameOut, subs)
         self.assertEqual(fileOut['file'], filenameOut)
         self.assertTrue(filecmp.cmp(filenameOut, filenameExpected))

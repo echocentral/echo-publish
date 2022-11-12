@@ -13,7 +13,7 @@ application = get_wsgi_application()
 class TestMergeUtils(TestCase):
     
     @parameterized.expand([
-        ('./tests/fixtures/Invoice.docx', 'a', 
+        ('./tests/fixtures/templates/Invoice.docx', 'a', 
             {
                 'number': 'INV342', 
                 'date': datetime.date(2022,10,1), 
@@ -42,8 +42,8 @@ class TestMergeUtils(TestCase):
         config = ClientConfig()
         config.tenant = ('.')
         filenameIn = fixture
-        filenameOut = filenameIn.replace('fixtures', 'results').replace('.docx', f'.{variant}.docx')
-        filenameExpected = filenameOut.replace('results', 'expected')
+        filenameOut = filenameIn.replace('templates', 'output').replace('.docx', f'.{variant}.docx')
+        filenameExpected = filenameOut.replace('output', 'expected')
         try:
             os.remove(filenameOut)
         except OSError:
